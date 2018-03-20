@@ -1,0 +1,11 @@
+AS COMPUTERS HAVE become more sophisticated, researchers have increasingly asked whether or not machines have the capability for creativity. Can we use machines for certain, or all, aspects of the creative process (and hopefully learn something about human creativity in the process)? This is the field of computational creativity, a fascinating interdisciplinary discipline.
+
+For example, IBM has been using the technology of Watson (of Jeopardy! fame) to create novel and intriguing food recipes. Through analyzing "the chemical compounds and ingredients, food professionals can identify new recipes and pairings that are not only tasty and healthy, but also efficient to produce." The recipes it generates are weird but apparently tasty.
+
+Well, there is another project named the What-If Machine that helps with another aspect of creativity: the part of ideation, coming up with creative new ideas that can be tested and explored (such as in a short story). From the website:
+
+In Computational Creativity research, we study how to engineer software which can take on some of the creative responsibility in arts and science projects. There has been much progress towards the creative generation of artefacts of cultural value such as poems, music and paintings. Often, when produced by people, such artefacts embed a fictional idea invented by the creator. For instance, an artist might have the fictional idea: [What if there was a quiz show, where each week someone was shot dead?] and express this through a painting, poem or film. While such ideation is clearly central to creativity, with obvious applications to the creative industries, there have only been a few small, ad-hoc studies of how to automate fictional ideation. The time is therefore ripe to see whether we can derive, implement and test novel formalisms and processes which enable software to not only invent, but assess, explore and present such ideas.
+
+The results, which you can generate and play with here, seem to all take the form of "What if there was a little [BLANK] who [BLANK]?" Lack of the subjunctive aside, you can get a lot of thought-provoking results.
+
+My favorite result so far, and which is somewhat haunting, is "What if there was a little whale who couldn't swim?"
