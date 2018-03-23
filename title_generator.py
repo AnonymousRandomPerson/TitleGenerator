@@ -73,7 +73,7 @@ POS_TEMPLATES = [
 ]
 
 #Parts of speech that allow the use of stopwords.
-POS_USE_STOPWORDS = {CONJUNCTION, DETERMINER}
+POS_USE_STOPWORDS = {CONJUNCTION, DETERMINER, PREPOSITION}
 #Parts of speech that should not be capitalized in the title.
 POS_NOT_CAPITAL = {CONJUNCTION, DETERMINER, PREPOSITION, PRONOUN_PERSONAL, PRONOUN_POSSESSIVE, TO}
 
