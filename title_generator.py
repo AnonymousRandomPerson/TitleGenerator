@@ -75,7 +75,11 @@ POS_TEMPLATES = [
     [ADJECTIVE, NOUN],
     [ADJECTIVES, NOUNS, CONJUNCTION, ADJECTIVES, NOUNS], #"Word Weighting and Title Generation"
     [ADJECTIVES, NOUNS, ':', DETERMINER, ADJECTIVES, NOUNS], #"Artificial Intelligence: A Modern Approach"
-    ['Towards', VERB_PRESENT_PARTICIPLE, ADJECTIVES, NOUNS]
+    ['Towards', VERB_PRESENT_PARTICIPLE, ADJECTIVES, NOUNS],
+    [DETERMINER, ADJECTIVES, NOUNS, 'for', NOUNS], #"A Data-centric Architecture for Search"
+    [ADJECTIVES, NOUNS, 'for', VERB_PRESENT_PARTICIPLE, ADJECTIVES, NOUNS], #"Empirical Methods for Evaluating Dialogue Systems"
+    [NOUNS, ',', DETERMINER, ADJECTIVES, NOUNS], #"GUS, A Driven System"
+    [ADJECTIVES, NOUNS, 'for', NOUNS, ':', DETERMINER, ADJECTIVES, NOUNS] #"Dialogue Systems for Surveys: the Rate-a-course System"
 ]
 
 #Parts of speech that allow the use of stopwords.
@@ -96,7 +100,7 @@ ADDITIONAL_STOPWORDS = {'et', 'al'}
 VOWELS = {'a', 'e', 'i', 'o', 'u'}
 
 #Punctutation that is used in POS templates.
-PUNCTUATION = {':'}
+PUNCTUATION = {':', ','}
 
 #The chance of an adjective being used when encountered in a POS template.
 ADJECTIVE_CHANCE = 0.5
