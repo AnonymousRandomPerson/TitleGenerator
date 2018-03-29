@@ -69,7 +69,13 @@ ADVERBS = (ADVERB, ADVERB_COMPARATIVE, ADVERB_SUPERLATIVE)
 #Also note that adjectives and adverbs will be inserted sometimes and ignored other times, based on their probability constants below.
 POS_TEMPLATES = [
     [VERB_PRESENT_PARTICIPLE, ADJECTIVES, NOUNS], #"Retitling Scientific Texts"
-    [DETERMINER, NOUNS, "of", ADJECTIVES, NOUNS] #"The Advantage of Short Paper Titles"
+    [DETERMINER, ADJECTIVES, NOUNS],
+    [DETERMINER, ADJECTIVES, NOUNS, 'of', ADJECTIVES, NOUNS], #"The Unreasonable Effectiveness of Mathematics"
+    [DETERMINER, ADJECTIVES, NOUNS, 'in', ADJECTIVES, NOUNS],
+    [ADJECTIVE, NOUN],
+    [ADJECTIVES, NOUNS, CONJUNCTION, ADJECTIVES, NOUNS], #"Word Weighting and Title Generation"
+    [ADJECTIVES, NOUNS, ':', DETERMINER, ADJECTIVES, NOUNS], #"Artificial Intelligence: A Modern Approach"
+    ['Towards', VERB_PRESENT_PARTICIPLE, ADJECTIVES, NOUNS]
 ]
 
 #Parts of speech that allow the use of stopwords.
@@ -88,6 +94,9 @@ ADDITIONAL_STOPWORDS = {'et', 'al'}
 
 #A list of all vowels.
 VOWELS = {'a', 'e', 'i', 'o', 'u'}
+
+#Punctutation that is used in POS templates.
+PUNCTUATION = {':'}
 
 #The chance of an adjective being used when encountered in a POS template.
 ADJECTIVE_CHANCE = 0.5
@@ -480,7 +489,7 @@ def get_compatible_pos_templates(input_text):
 #Checks to see if there is a POS template entry is a manually set word.
 #This is done by looking for lowercase characters, which are not contained in POS tags.
 def is_manual_word(word):
-    return isinstance(word, str) and re.search('[a-z]', word)
+    return isinstance(word, str) and re.search('[^A-Z\$]', word)
 
 #Checks if a part of speech is usable based on the input text.
 #Usually whether the text contains any word of that part of speech,
@@ -529,7 +538,7 @@ def build_title_with_template(input_text, pos_template):
                     stem = input_text.filtered_bases_and_words[word]
                     if not stem:
                         stem = word
-                    if word in input_text.word_weights and word not in title_word_set:
+                    if stem in input_text.word_weights and word not in title_word_set:
                         weight = input_text.word_weights[stem]
                         weight_sum += weight
                         possible_word_weights.append((possible_word, weight))
@@ -566,16 +575,16 @@ def form_title_from_words(input_text, title_words):
             else:
                 word = 'a'
 
-        if i == 0 or (pos not in POS_NOT_CAPITAL and word not in input_text.stop_words):
+        if i == 0 or word == 'I' or (pos not in POS_NOT_CAPITAL and word not in input_text.stop_words):
             #Capitalize title words except certain "less important" words.
             word = word.capitalize()
 
         tagged_word[0] = word
 
-    title = ""
+    title = ''
     for tagged_word in title_words:
-        if title:
-            title += " "
+        if title and tagged_word[0] not in PUNCTUATION:
+            title += ' '
         title += tagged_word[0]
 
     return title
