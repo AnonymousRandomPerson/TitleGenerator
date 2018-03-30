@@ -71,6 +71,7 @@ POS_TEMPLATES = [
     [VERB_PRESENT_PARTICIPLE, ADJECTIVES, NOUNS], #"Retitling Scientific Texts"
     [DETERMINER, ADJECTIVES, NOUNS],
     [DETERMINER, ADJECTIVES, NOUNS, 'of', ADJECTIVES, NOUNS], #"The Unreasonable Effectiveness of Mathematics"
+    [ADJECTIVES, NOUNS, 'in', ADJECTIVES, NOUNS],
     [DETERMINER, ADJECTIVES, NOUNS, 'in', ADJECTIVES, NOUNS],
     [ADJECTIVE, NOUN],
     [ADJECTIVES, NOUNS, CONJUNCTION, ADJECTIVES, NOUNS], #"Word Weighting and Title Generation"
@@ -100,7 +101,7 @@ ADDITIONAL_STOPWORDS = {'et', 'al'}
 VOWELS = {'a', 'e', 'i', 'o', 'u'}
 
 #Punctutation that is used in POS templates.
-PUNCTUATION = {':', ','}
+PUNCTUATION = {':',','}
 
 #The chance of an adjective being used when encountered in a POS template.
 ADJECTIVE_CHANCE = 0.5
@@ -137,6 +138,8 @@ class Corpus:
         self.stemmed_words = []
         #Store dictionary of a corpus' stemmed words and their frequencies and proximity
         self.word_freq_proximity = {}
+        #Store list of stems of words in the introduction and/or conclusion
+        self.intro_conc_stems = []
         #Store dictionary of filtered words with associated base words
         self.filtered_word_and_bases = {}
         #Store dictionary of filtered base words with associated words
@@ -282,7 +285,26 @@ def main(args, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
     logger.info("Closing file")
     text_file.close()
 
-    print_titles(titles)
+    ##########################
+
+    logger.info("------ Begin Ranking ------")
+
+    #NOTE: the scores denote the title rankings relative to one another
+    #      1 denotes the "best" title (highest absolute sum of word weights)
+    #      and 0 denotes the "worst" of the presented titles
+    titles_ranked = order_titles(titles, input_text)
+
+    logger.info("------ End Ranking ------\n\n")
+
+    ##########################
+
+    logger.info("------ Begin Print ------")
+
+    print_titles(titles_ranked)
+    
+    logger.info("------ End Print ------\n\n")
+
+
 
 #Create pos tags from tokenized text
 def pos_tagger(corpus):
@@ -332,8 +354,12 @@ def stems_frequency_proximity(corpus, cutoff=0.125):
         if stem not in stemmed_word_freq.keys():
             if proximity_base_score < introduction_cutoff:
                 stemmed_word_freq[stem] = (stemmed_freq[stem], generate_word_weight(index, text_length))
+                if stem not in corpus.intro_conc_stems:
+                    corpus.intro_conc_stems.append(stem)
             elif proximity_base_score > conclusion_cutoff:
                 stemmed_word_freq[stem] = (stemmed_freq[stem], generate_word_weight(index, text_length))
+                if stem not in corpus.intro_conc_stems:
+                    corpus.intro_conc_stems.append(stem)
             else:
                 stemmed_word_freq[stem] = (stemmed_freq[stem], float(index)/text_length)
     return stemmed_word_freq
@@ -403,23 +429,30 @@ def get_word_weights(input_text):
 
     word_weight_dict = {}
     #weighted sum of word proximity, frequency, and (potentially) tfidf
-    for word in word_freq_prox.keys():
-        #find the highest tfidf score associated with the word
+    for stem in word_freq_prox.keys():
+        #find the highest tfidf score associated with the stem
         highest_word_tfidf = -1
         for stem_tfidf_dict in word_tfidf_weights:
-            if word in stem_tfidf_dict.keys():
-                tfidf_weight = stem_tfidf_dict[word]
+            if stem in stem_tfidf_dict.keys():
+                tfidf_weight = stem_tfidf_dict[stem]
                 if tfidf_weight > highest_word_tfidf:
                     highest_word_tfidf = tfidf_weight
 
-        (freq, prox) = word_freq_prox[word]
+        (freq, prox) = word_freq_prox[stem]
         #higher weight for words near the beginning or end of the document
-        prox_mult = 1 #how important proximity is (lower: less important)
+        prox_mult = 10 #how important proximity is (lower: less important)
         prox_weight = (1 - prox)*prox_mult
 
         #higher weight for words that occur more frequently
-        freq_mult = 0.5 #how important frequency is (lower: less important)
+        #NOTE: if this is higher, more words will have a higher weight 
+        #      associated with them
+        freq_mult = 1.5#0.5 #how important frequency is (lower: less important)
         freq_weight = (float(freq)/max_freq)*freq_mult
+
+        # if the word is in the intro or conclusion, use its frequency weight
+        #    rather than calculating the frequency component
+        #if stem in input_text.intro_conc_stems:
+        #    freq_weight = freq
 
         #NOTE: I left the weight of this component at 0 because it might not be
         #      useful - but didn't know if there is absolutely no use for this.
@@ -428,7 +461,14 @@ def get_word_weights(input_text):
         tfidf_mult = 0#.5
         tfidf = (highest_word_tfidf / max_tfidf)*tfidf_mult
 
-        word_weight_dict[word] = prox_weight+freq_weight+tfidf
+        #this power is useful for creating more discrete divisions between 
+        #   word ranks (i.e., the higher the power, the more "groups" of
+        #   ranks
+        power = len(input_text.filtered_tokens)
+        if len(input_text.filtered_tokens) >= 10:
+            power = 10
+        
+        word_weight_dict[stem] = (prox_weight*freq_weight+tfidf)**power
     return word_weight_dict
 
 #Output (to the console) up to 20 words with weight above the weight threshold
@@ -451,7 +491,7 @@ def print_words_with_weight_above(weight_thresh, weights, input_text):
                     [pos[actual_word] for actual_word in actual_words]))
 
     #print out up to 20 rows of weights, pos tags, and words
-    for _ in xrange(min([20, len(weights.keys())])):
+    for _ in xrange(max([20, len(weights.keys())])):
         curr_word = heapq.heappop(word_and_weights)
         logger.info("\tWeight, pos, word: %s %s \t%s" % (-curr_word[0], curr_word[1], curr_word[2]))
 
@@ -507,6 +547,7 @@ def build_title_with_template(input_text, pos_template):
     title_words = []
     #Keep track of used words to avoid duplicate non-stop-words in a title.
     title_word_set = set()
+    title_stem_set = set()
     for pos_element in pos_template:
         if is_manual_word(pos_element):
             new_word = (pos_element, DEFAULT_TAG)
@@ -542,7 +583,7 @@ def build_title_with_template(input_text, pos_template):
                     stem = input_text.filtered_bases_and_words[word]
                     if not stem:
                         stem = word
-                    if stem in input_text.word_weights and word not in title_word_set:
+                    if stem in input_text.word_weights and word not in title_word_set and stem not in title_stem_set:
                         weight = input_text.word_weights[stem]
                         weight_sum += weight
                         possible_word_weights.append((possible_word, weight))
@@ -561,6 +602,7 @@ def build_title_with_template(input_text, pos_template):
 
         title_words.append(list(new_word))
         title_word_set.add(new_word[0])
+        title_stem_set.add(input_text.filtered_bases_and_words[new_word[0]])
 
     title = form_title_from_words(input_text, title_words)
 
@@ -592,6 +634,42 @@ def form_title_from_words(input_text, title_words):
         title += tagged_word[0]
 
     return title
+
+#Returns the title's score (i.e., summed weight of all the title's words)
+def get_title_score(title, input_text):
+    score = 0
+    title = title.translate(None, string.punctuation)
+    for word in title.split():
+        word = word.lower()
+        stem = input_text.filtered_bases_and_words[word]
+        if stem!='': score += input_text.word_weights[stem]
+    return score
+
+#Return a list of titles and their scores, ordered from "best" (1) to 
+#   "worst" (0) relative to the sum of their composite word weights
+def order_titles(titles, input_text):
+    titles_ranked = []
+    titles_temp_ranked = []
+    titles_temp_ranked2 = []
+
+    for title in titles:
+        title_score = get_title_score(title, input_text)
+        heapq.heappush(titles_temp_ranked, (-title_score,title))
+
+    max_score = -1
+    for i,_ in enumerate(titles):
+        score, title = heapq.heappop(titles_temp_ranked) #scores are negative
+        if i==0: max_score = score
+        diff = max_score - score
+        heapq.heappush(titles_temp_ranked2, (diff, title))
+    for i,_ in enumerate(titles):
+        diff, title = heapq.heappop(titles_temp_ranked2)
+        if i==0: max_diff = diff
+        heapq.heappush(titles_temp_ranked, ((diff/max_diff),title))
+    for _ in titles:
+        diff, title = heapq.heappop(titles_temp_ranked)
+        titles_ranked.append((title, 1-diff))
+    return titles_ranked
 
 #Prints the list of generated titles to the user.
 def print_titles(titles):
