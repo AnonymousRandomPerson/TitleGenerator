@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import argparse
 from collections import Counter, defaultdict
 import heapq
@@ -168,6 +170,8 @@ def main(args, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
     text_file = open(file_name)
     logger.info("Reading file")
     raw_text = text_file.read().lower()
+    # Remove Unicode characters.
+    raw_text = raw_text.decode('unicode_escape').encode('ascii','ignore')
 
     #Convert raw text to word tokens
     logger.info("Tokenizing")
@@ -301,7 +305,7 @@ def main(args, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
     logger.info("------ Begin Print ------")
 
     print_titles(titles_ranked)
-    
+
     logger.info("------ End Print ------\n\n")
 
 
@@ -444,7 +448,7 @@ def get_word_weights(input_text):
         prox_weight = (1 - prox)*prox_mult
 
         #higher weight for words that occur more frequently
-        #NOTE: if this is higher, more words will have a higher weight 
+        #NOTE: if this is higher, more words will have a higher weight
         #      associated with them
         freq_mult = 1.5#0.5 #how important frequency is (lower: less important)
         freq_weight = (float(freq)/max_freq)*freq_mult
@@ -461,13 +465,13 @@ def get_word_weights(input_text):
         tfidf_mult = 0#.5
         tfidf = (highest_word_tfidf / max_tfidf)*tfidf_mult
 
-        #this power is useful for creating more discrete divisions between 
+        #this power is useful for creating more discrete divisions between
         #   word ranks (i.e., the higher the power, the more "groups" of
         #   ranks
         power = len(input_text.filtered_tokens)
         if len(input_text.filtered_tokens) >= 10:
             power = 10
-        
+
         word_weight_dict[stem] = (prox_weight*freq_weight+tfidf)**power
     return word_weight_dict
 
@@ -645,7 +649,7 @@ def get_title_score(title, input_text):
         if stem!='': score += input_text.word_weights[stem]
     return score
 
-#Return a list of titles and their scores, ordered from "best" (1) to 
+#Return a list of titles and their scores, ordered from "best" (1) to
 #   "worst" (0) relative to the sum of their composite word weights
 def order_titles(titles, input_text):
     titles_ranked = []
