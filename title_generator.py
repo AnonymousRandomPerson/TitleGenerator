@@ -153,7 +153,7 @@ class Corpus:
         #Store stopwords that are ignored when weighting.
         self.stop_words = set()
 
-def main(args, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
+def main(file_name, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
     #Assumes file is in the program directory
     logger.info("In main\n")
 
@@ -166,6 +166,16 @@ def main(args, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
         file_name = raw_input()#"sample_text.txt"
     logger.info("\t %s" % file_name)
     logger.info("Got file name")
+
+    titles_ranked = generate_titles(file_name, use_rake, use_summa_text_rank, use_text_rank)
+
+    logger.info("------ Begin Print ------")
+
+    print_titles(titles_ranked)
+
+    logger.info("------ End Print ------\n\n")
+
+def generate_titles(file_name, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
     logger.info("Opening file")
     text_file = open(file_name)
     logger.info("Reading file")
@@ -302,13 +312,7 @@ def main(args, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
 
     ##########################
 
-    logger.info("------ Begin Print ------")
-
-    print_titles(titles_ranked)
-
-    logger.info("------ End Print ------\n\n")
-
-
+    return titles_ranked
 
 #Create pos tags from tokenized text
 def pos_tagger(corpus):
