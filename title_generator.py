@@ -230,7 +230,7 @@ def generate_titles(file_name, use_rake=False, use_summa_text_rank=False, use_te
     logger.info("Getting word frequency and proximity")
     cutoff = 0.125
     if len(input_text.filtered_tokens) < 250:
-        cutoff = 0.33
+        cutoff = 0.35 #33
     input_text.word_freq_proximity = stems_frequency_proximity(input_text, cutoff)
     #logger.info("\t %s" % (input_text.word_freq_proximity[u'becom'],))
 
@@ -304,8 +304,9 @@ def generate_titles(file_name, use_rake=False, use_summa_text_rank=False, use_te
     logger.info("------ Begin Ranking ------")
 
     #NOTE: the scores denote the title rankings relative to one another
-    #      1 denotes the "best" title (highest absolute sum of word weights)
-    #      and 0 denotes the "worst" of the presented titles
+    #      1 denotes the title with the highest rank and 0 denotes the
+    #      title with the lowest rank (determined by a combination of
+    #      summed word weights and average word weight)
     titles_ranked = order_titles(titles, input_text)
 
     logger.info("------ End Ranking ------\n\n")
@@ -454,7 +455,7 @@ def get_word_weights(input_text):
         #higher weight for words that occur more frequently
         #NOTE: if this is higher, more words will have a higher weight
         #      associated with them
-        freq_mult = 1.5#0.5 #how important frequency is (lower: less important)
+        freq_mult = 7#1.5 #how important frequency is (lower: less important)
         freq_weight = (float(freq)/max_freq)*freq_mult
 
         # if the word is in the intro or conclusion, use its frequency weight
@@ -466,16 +467,14 @@ def get_word_weights(input_text):
         #      useful - but didn't know if there is absolutely no use for this.
         #higher weight for words with higher tfidf score, normalize tfidf score
         #between 0 and tfidf_mult
-        tfidf_mult = 0#.5
+        tfidf_mult = 0
         tfidf = (highest_word_tfidf / max_tfidf)*tfidf_mult
 
         #this power is useful for creating more discrete divisions between
         #   word ranks (i.e., the higher the power, the more "groups" of
-        #   ranks
+        #   ranks)
         power = len(input_text.filtered_tokens)
-        if len(input_text.filtered_tokens) >= 10:
-            power = 10
-
+        power = 5
         word_weight_dict[stem] = (prox_weight*freq_weight+tfidf)**power
     return word_weight_dict
 
@@ -643,26 +642,55 @@ def form_title_from_words(input_text, title_words):
 
     return title
 
-#Returns the title's score (i.e., summed weight of all the title's words)
-def get_title_score(title, input_text):
+#Returns the title's score.  Score is determined based on specified mode.
+#Mode options: sum (sum all word weights in title)
+#              avg (get the average word weight of the title)
+def get_title_score(title, input_text, mode):
     score = 0
     title = title.translate(None, string.punctuation)
     for word in title.split():
         word = word.lower()
         stem = input_text.filtered_bases_and_words[word]
+        #if the word isn't in filtered_bases_and_words, stem = ""
         if stem!='': score += input_text.word_weights[stem]
+    if mode=="avg":
+        score /= len(title.split())
     return score
 
 #Return a list of titles and their scores, ordered from "best" (1) to
 #   "worst" (0) relative to the sum of their composite word weights
 def order_titles(titles, input_text):
     titles_ranked = []
-    titles_temp_ranked = []
-    titles_temp_ranked2 = []
+    titles_temp_ranked_sum = []
+    titles_temp_ranked_avg = []
+    titles_temp = []
 
     for title in titles:
-        title_score = get_title_score(title, input_text)
-        heapq.heappush(titles_temp_ranked, (-title_score,title))
+        title_score_sum = get_title_score(title, input_text, "sum")
+        heapq.heappush(titles_temp_ranked_sum, (-title_score_sum, title))
+    titles_temp_ranked_sum = get_spectrum(titles_temp_ranked_sum, titles)
+    logger.info("\nTITLES TEMP RANKED SUM: %s" % titles_temp_ranked_sum)
+
+    for title in titles:
+        title_score_avg = get_title_score(title, input_text, "avg")
+        heapq.heappush(titles_temp_ranked_avg, (-title_score_avg, title))
+    titles_temp_ranked_avg = get_spectrum(titles_temp_ranked_avg, titles)
+    logger.info("\nTITLES TEMP RANKED AVG: %s" % titles_temp_ranked_avg,"\n")
+
+    length = len(titles_temp_ranked_avg)
+    for idx in xrange(length):
+        value = (-(titles_temp_ranked_avg[idx][1]+titles_temp_ranked_sum[idx][1]), titles_temp_ranked_sum[idx][0])
+        heapq.heappush(titles_temp, value)
+    for _ in xrange(length):
+        score, title = heapq.heappop(titles_temp)
+        titles_ranked.append((title, -score))
+
+    return titles_ranked
+
+
+def get_spectrum(titles_temp_ranked, titles):
+    titles_ranked = []
+    titles_temp_ranked2 = []
 
     max_score = -1
     for i,_ in enumerate(titles):
@@ -673,9 +701,9 @@ def order_titles(titles, input_text):
     for i,_ in enumerate(titles):
         diff, title = heapq.heappop(titles_temp_ranked2)
         if i==0: max_diff = diff
-        heapq.heappush(titles_temp_ranked, ((diff/max_diff),title))
+        heapq.heappush(titles_temp_ranked, (title, (diff/max_diff)))
     for _ in titles:
-        diff, title = heapq.heappop(titles_temp_ranked)
+        title, diff = heapq.heappop(titles_temp_ranked)
         titles_ranked.append((title, 1-diff))
     return titles_ranked
 
