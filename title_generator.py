@@ -304,8 +304,9 @@ def generate_titles(file_name, use_rake=False, use_summa_text_rank=False, use_te
     logger.info("------ Begin Ranking ------")
 
     #NOTE: the scores denote the title rankings relative to one another
-    #      1 denotes the title with the highest average word weight
-    #      and 0 denotes the title with the lowest average word weight
+    #      1 denotes the title with the highest rank and 0 denotes the
+    #      title with the lowest rank (determined by a combination of
+    #      summed word weights and average word weight)
     titles_ranked = order_titles(titles, input_text)
 
     logger.info("------ End Ranking ------\n\n")
