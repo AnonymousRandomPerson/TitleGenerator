@@ -37,6 +37,8 @@ ADJECTIVE = 'JJ'
 ADJECTIVE_COMPARATIVE = 'JJR'
 #POS tag for superlative adjectives.
 ADJECTIVE_SUPERLATIVE = 'JJS'
+#POS tag for numbers.
+NUMBER = 'CD'
 #POS tag for singular nouns.
 NOUN = 'NN'
 #POS tag for plural nouns.
@@ -53,6 +55,10 @@ ADVERB_COMPARATIVE = 'RBR'
 ADVERB_SUPERLATIVE = 'RBS'
 #POS tag for 'to'.
 TO = 'TO'
+#POS tag for past-tense verbs.
+VERB_PAST = 'VBD'
+#POS tag for present-tense verbs.
+VERB_PRESENT = 'VBZ'
 #POS tag for present participles and gerunds.
 VERB_PRESENT_PARTICIPLE = 'VBG'
 #Dummy POS tag for manually set words.
@@ -60,7 +66,13 @@ DEFAULT_TAG = 'DEFAULT'
 
 #All of the possible noun tags.
 NOUNS = (NOUN, NOUN_PLURAL, NOUN_PROPER, NOUN_PROPER_PLURAL)
+#Singular noun tags.
+SINGULAR_NOUNS = (NOUN, NOUN_PROPER)
+#Plural noun tags.
+PLURAL_NOUNS = (NOUN_PLURAL, NOUN_PROPER_PLURAL)
+#All of the possible adjective tags.
 ADJECTIVES = (ADJECTIVE, ADJECTIVE_COMPARATIVE, ADJECTIVE_SUPERLATIVE)
+#All of the possible adverb tags.
 ADVERBS = (ADVERB, ADVERB_COMPARATIVE, ADVERB_SUPERLATIVE)
 
 #A list of all part-of-speech templates for making words.
@@ -82,7 +94,9 @@ POS_TEMPLATES = [
     [DETERMINER, ADJECTIVES, NOUNS, 'for', NOUNS], #"A Data-centric Architecture for Search"
     [ADJECTIVES, NOUNS, 'for', VERB_PRESENT_PARTICIPLE, ADJECTIVES, NOUNS], #"Empirical Methods for Evaluating Dialogue Systems"
     [NOUNS, ',', DETERMINER, ADJECTIVES, NOUNS], #"GUS, A Driven System"
-    [ADJECTIVES, NOUNS, 'for', NOUNS, ':', DETERMINER, ADJECTIVES, NOUNS] #"Dialogue Systems for Surveys: the Rate-a-course System"
+    [ADJECTIVES, NOUNS, 'for', NOUNS, ':', DETERMINER, ADJECTIVES, NOUNS], #"Dialogue Systems for Surveys: the Rate-a-course System"
+    [NUMBER, ADJECTIVES, NOUNS, PREPOSITION, NOUNS],
+    [ADJECTIVES, NOUNS, VERB_PAST, ADJECTIVES, NOUNS] #"Chemists nudged two atoms"
 ]
 
 #Parts of speech that allow the use of stopwords.
@@ -104,6 +118,11 @@ VOWELS = {'a', 'e', 'i', 'o', 'u'}
 
 #Punctutation that is used in POS templates.
 PUNCTUATION = {':',','}
+
+#Determiners that must be followed by a singular noun.
+SINGULAR_DETERMINERS = {'a', 'an', 'another', 'each', 'one', '1', 'this'}
+#Determiners that must be followed by a plural noun.
+PLURAL_DETERMINERS = {'all', 'both', 'many', 'some', 'these', 'those'}
 
 #The chance of an adjective being used when encountered in a POS template.
 ADJECTIVE_CHANCE = 0.5
@@ -555,6 +574,9 @@ def build_title_with_template(input_text, pos_template):
     #Keep track of used words to avoid duplicate non-stop-words in a title.
     title_word_set = set()
     title_stem_set = set()
+
+    last_determiner = None
+
     for pos_element in pos_template:
         if is_manual_word(pos_element):
             new_word = (pos_element, DEFAULT_TAG)
@@ -567,10 +589,24 @@ def build_title_with_template(input_text, pos_template):
                 continue
 
             if is_multiple_pos:
+
                 #Add all POS lists if there are multiple options.
                 possible_words = []
-                for pos in pos_element:
+
+                #Limit the types of POS if the previous word could cause grammatical issues.
+                modified_pos = []
+                if pos_element is NOUNS or pos_element is PLURAL_NOUNS:
+                    if last_determiner in SINGULAR_DETERMINERS:
+                        modified_pos = SINGULAR_NOUNS
+                    elif last_determiner in PLURAL_DETERMINERS:
+                        modified_pos = PLURAL_NOUNS
+
+                for pos in modified_pos:
                     possible_words += [(word, pos) for word in input_text.pos_tag_and_words[pos]]
+
+                if not possible_words:
+                    for pos in pos_element:
+                        possible_words += [(word, pos) for word in input_text.pos_tag_and_words[pos]]
             else:
                 possible_words = [(word, pos_element) for word in input_text.pos_tag_and_words[pos_element]]
 
@@ -610,6 +646,11 @@ def build_title_with_template(input_text, pos_template):
         title_words.append(list(new_word))
         title_word_set.add(new_word[0])
         title_stem_set.add(input_text.filtered_bases_and_words[new_word[0]])
+
+        if new_word[1] == DETERMINER or new_word[1] == NUMBER:
+            last_determiner = new_word[0]
+        elif new_word[1] not in ADJECTIVES:
+            last_determiner = None
 
     title = form_title_from_words(input_text, title_words)
 
