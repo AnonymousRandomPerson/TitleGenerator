@@ -458,44 +458,46 @@ def get_word_weights(input_text, random=False):
     word_weight_dict = {}
     #weighted sum of word proximity, frequency, and (potentially) tfidf
     for stem in word_freq_prox.keys():
-        #find the highest tfidf score associated with the stem
-        highest_word_tfidf = -1
-        for stem_tfidf_dict in word_tfidf_weights:
-            if stem in stem_tfidf_dict.keys():
-                tfidf_weight = stem_tfidf_dict[stem]
-                if tfidf_weight > highest_word_tfidf:
-                    highest_word_tfidf = tfidf_weight
-
-        (freq, prox) = word_freq_prox[stem]
-        #higher weight for words near the beginning or end of the document
-        prox_mult = 10 #how important proximity is (lower: less important)
-        prox_weight = (1 - prox)*prox_mult
-
-        #higher weight for words that occur more frequently
-        #NOTE: if this is higher, more words will have a higher weight
-        #      associated with them
-        freq_mult = 7#1.5 #how important frequency is (lower: less important)
-        freq_weight = (float(freq)/max_freq)*freq_mult
-
-        # if the word is in the intro or conclusion, use its frequency weight
-        #    rather than calculating the frequency component
-        #if stem in input_text.intro_conc_stems:
-        #    freq_weight = freq
-
-        #NOTE: I left the weight of this component at 0 because it might not be
-        #      useful - but didn't know if there is absolutely no use for this.
-        #higher weight for words with higher tfidf score, normalize tfidf score
-        #between 0 and tfidf_mult
-        tfidf_mult = 0
-        tfidf = (highest_word_tfidf / max_tfidf)*tfidf_mult
-
-        #this power is useful for creating more discrete divisions between
-        #   word ranks (i.e., the higher the power, the more "groups" of
-        #   ranks)
-        power = len(input_text.filtered_tokens)
-        power = 5
-        word_weight_dict[stem] = (prox_weight*freq_weight+tfidf)**power
+        
         if random: word_weight_dict[stem] = 1
+        else:
+            #find the highest tfidf score associated with the stem
+            highest_word_tfidf = -1
+            for stem_tfidf_dict in word_tfidf_weights:
+                if stem in stem_tfidf_dict.keys():
+                    tfidf_weight = stem_tfidf_dict[stem]
+                    if tfidf_weight > highest_word_tfidf:
+                        highest_word_tfidf = tfidf_weight
+
+            (freq, prox) = word_freq_prox[stem]
+            #higher weight for words near the beginning or end of the document
+            prox_mult = 10 #how important proximity is (lower: less important)
+            prox_weight = (1 - prox)*prox_mult
+
+            #higher weight for words that occur more frequently
+            #NOTE: if this is higher, more words will have a higher weight
+            #      associated with them
+            freq_mult = 7#1.5 #how important frequency is (lower: less important)
+            freq_weight = (float(freq)/max_freq)*freq_mult
+
+            # if the word is in the intro or conclusion, use its frequency weight
+            #    rather than calculating the frequency component
+            #if stem in input_text.intro_conc_stems:
+            #    freq_weight = freq
+
+            #NOTE: I left the weight of this component at 0 because it might not be
+            #      useful - but didn't know if there is absolutely no use for this.
+            #higher weight for words with higher tfidf score, normalize tfidf score
+            #between 0 and tfidf_mult
+            tfidf_mult = 0
+            tfidf = (highest_word_tfidf / max_tfidf)*tfidf_mult
+
+            #this power is useful for creating more discrete divisions between
+            #   word ranks (i.e., the higher the power, the more "groups" of
+            #   ranks)
+            power = len(input_text.filtered_tokens)
+            power = 5
+            word_weight_dict[stem] = (prox_weight*freq_weight+tfidf)**power
     return word_weight_dict
 
 #Output (to the console) up to 20 words with weight above the weight threshold
