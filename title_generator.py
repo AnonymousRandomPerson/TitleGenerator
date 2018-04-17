@@ -172,7 +172,7 @@ class Corpus:
         #Store stopwords that are ignored when weighting.
         self.stop_words = set()
 
-def main(file_name, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
+def main(file_name, random=False, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
     #Assumes file is in the program directory
     logger.info("In main\n")
 
@@ -186,7 +186,7 @@ def main(file_name, use_rake=False, use_summa_text_rank=False, use_text_rank=Fal
     logger.info("\t %s" % file_name)
     logger.info("Got file name")
 
-    titles_ranked = generate_titles(file_name, use_rake, use_summa_text_rank, use_text_rank)
+    titles_ranked = generate_titles(file_name, random, use_rake, use_summa_text_rank, use_text_rank)
 
     logger.info("------ Begin Print ------")
 
@@ -194,7 +194,7 @@ def main(file_name, use_rake=False, use_summa_text_rank=False, use_text_rank=Fal
 
     logger.info("------ End Print ------\n\n")
 
-def generate_titles(file_name, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
+def generate_titles(file_name, random=False, use_rake=False, use_summa_text_rank=False, use_text_rank=False):
     logger.info("Opening file")
     text_file = open(file_name)
     logger.info("Reading file")
@@ -297,7 +297,7 @@ def generate_titles(file_name, use_rake=False, use_summa_text_rank=False, use_te
     logger.info("------ Begin Weighting ------")
 
     logger.info("Calculating word weights")
-    input_text.word_weights = get_word_weights(input_text)
+    input_text.word_weights = get_word_weights(input_text, random)
 
     logger.info("Printing word weights")
     weight_thresh = -1
@@ -443,7 +443,7 @@ def get_tfidf_weight(stem_groups):
     return tfidf_group_weights
 
 #Create dictionary of words and their associated weights
-def get_word_weights(input_text):
+def get_word_weights(input_text, random=False):
     word_freq_prox = input_text.word_freq_proximity
     #get the maximum word frequency
     max_freq = max([freq_prox[0] for freq_prox in word_freq_prox.values()])
@@ -495,6 +495,7 @@ def get_word_weights(input_text):
         power = len(input_text.filtered_tokens)
         power = 5
         word_weight_dict[stem] = (prox_weight*freq_weight+tfidf)**power
+        if random: word_weight_dict[stem] = 1
     return word_weight_dict
 
 #Output (to the console) up to 20 words with weight above the weight threshold
@@ -716,7 +717,7 @@ def order_titles(titles, input_text):
         title_score_avg = get_title_score(title, input_text, "avg")
         heapq.heappush(titles_temp_ranked_avg, (-title_score_avg, title))
     titles_temp_ranked_avg = get_spectrum(titles_temp_ranked_avg, titles)
-    logger.info("\nTITLES TEMP RANKED AVG: %s" % titles_temp_ranked_avg,"\n")
+    logger.info("\nTITLES TEMP RANKED AVG: %s\n" % titles_temp_ranked_avg)
 
     length = len(titles_temp_ranked_avg)
     for idx in xrange(length):
@@ -763,5 +764,5 @@ if __name__ == "__main__":
     parser.add_argument("--file_name", help="File name of .txt file with extension (e.g., text.txt)", type=str)
     args = parser.parse_args()
 
-    main(args, use_rake=False, use_summa_text_rank=False, use_text_rank=False)
+    main(args, random=False, use_rake=False, use_summa_text_rank=False, use_text_rank=False)
     logger.info("------------ Finished ------------")
