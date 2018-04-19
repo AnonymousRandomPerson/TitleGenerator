@@ -458,7 +458,7 @@ def get_word_weights(input_text, random=False):
     word_weight_dict = {}
     #weighted sum of word proximity, frequency, and (potentially) tfidf
     for stem in word_freq_prox.keys():
-        
+
         if random: word_weight_dict[stem] = 1
         else:
             #find the highest tfidf score associated with the stem
@@ -745,7 +745,10 @@ def get_spectrum(titles_temp_ranked, titles):
     for i,_ in enumerate(titles):
         diff, title = heapq.heappop(titles_temp_ranked2)
         if i==0: max_diff = diff
-        heapq.heappush(titles_temp_ranked, (title, (diff/max_diff)))
+        score = 0
+        if max_diff != 0:
+            score = diff/max_diff
+        heapq.heappush(titles_temp_ranked, (title, score))
     for _ in titles:
         title, diff = heapq.heappop(titles_temp_ranked)
         titles_ranked.append((title, 1-diff))
@@ -763,8 +766,9 @@ if __name__ == "__main__":
     logger.info("------------ Starting ------------")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file_name", help="File name of .txt file with extension (e.g., text.txt)", type=str)
+    parser.add_argument("--file-name", help="File name of .txt file with extension (e.g., text.txt)", type=str)
+    parser.add_argument("--no-weights", help="Ignore word weights and use a uniform random selection of words for titles.", action="store_true")
     args = parser.parse_args()
 
-    main(args, random=False, use_rake=False, use_summa_text_rank=False, use_text_rank=False)
+    main(args, random=args.no_weights, use_rake=False, use_summa_text_rank=False, use_text_rank=False)
     logger.info("------------ Finished ------------")
