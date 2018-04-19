@@ -23,7 +23,12 @@ class Screen:
         self.generate_frame.grid(row=1, column=0)
 
         self.generate_button = Button(self.generate_frame, text='Generate Titles', command=self.generate, state=DISABLED)
-        self.generate_button.grid(row=0, column=0)
+        self.generate_button.grid(row=1, column=0)
+
+        self.use_weights = BooleanVar()
+        self.use_weights.set(True)
+        self.weight_check = Checkbutton(self.generate_frame, text='Use Word Weights', command=self.generate, variable=self.use_weights)
+        self.weight_check.grid(row=0, column=0)
 
         self.titles_frame = Frame(self.root)
         self.titles_frame.grid(row=2, column=0)
@@ -46,23 +51,24 @@ class Screen:
             self.generate()
 
     def generate(self):
-        titles_ranked = title_generator.generate_titles(self.file_name)
+        if self.file_name:
+            titles_ranked = title_generator.generate_titles(self.file_name, not self.use_weights.get())
 
-        if not self.title_labels:
-            for i in xrange(len(titles_ranked)):
-                title_label = Label(self.titles_frame)
-                title_label.grid(row = i, column=0, sticky=W)
+            if not self.title_labels:
+                for i in xrange(len(titles_ranked)):
+                    title_label = Label(self.titles_frame)
+                    title_label.grid(row = i, column=0, sticky=W)
 
-                score_label = Label(self.titles_frame)
-                score_label.grid(row = i, column=1, sticky=W)
+                    score_label = Label(self.titles_frame)
+                    score_label.grid(row = i, column=1, sticky=W)
 
-                self.title_labels.append(title_label)
-                self.title_labels.append(score_label)
+                    self.title_labels.append(title_label)
+                    self.title_labels.append(score_label)
 
-        for i, title_ranked in enumerate(titles_ranked):
-            title, score = title_ranked
-            self.title_labels[i * 2]['text'] = title
-            self.title_labels[i * 2 + 1]['text'] = score
+            for i, title_ranked in enumerate(titles_ranked):
+                title, score = title_ranked
+                self.title_labels[i * 2]['text'] = title
+                self.title_labels[i * 2 + 1]['text'] = score
 
 if __name__ == '__main__':
     app = Screen()
