@@ -1,7 +1,7 @@
 import os
 
 from Tkinter import *
-from tkinter.filedialog import *
+from tkFileDialog import *
 
 import title_generator
 
