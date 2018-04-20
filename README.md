@@ -8,7 +8,7 @@ Sci-Ti is a creativity support system for generating titles for scientific texts
   > pip install -r requirements.txt
 3. Use the following command to install TextRank (another dependency not included in requirements.txt):
   > pip install [git+git://github.com/davidadamojr/TextRank.git](git+git://github.com/davidadamojr/TextRank.git))
-4. Download the stopwords corpus and averaged_perceptron_tagger model from NLTK. Instructions on how to download NLTK corpora can be found [here](https://www.nltk.org/data.html).
+4. Download the stopwords corpus and averaged_perceptron_tagger model from NLTK. Instructions on how to download these can be found [here](https://www.nltk.org/data.html).
 
 ## Usage
 Sci-Ti provides two interfaces, a graphical user interface (GUI) and a command line interface (CLI).
