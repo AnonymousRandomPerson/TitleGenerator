@@ -40,9 +40,10 @@ class Screen:
         self.root.mainloop()
 
     def open_select(self):
-        self.file_name = askopenfilename(filetypes=[('Plain text files', '*.txt')])
+        file_name = askopenfilename(filetypes=[('Plain text files', '*.txt')])
 
-        if self.file_name:
+        if file_name:
+            self.file_name = file_name
             self.input_name['text'] = os.path.basename(self.file_name)
             self.input_name['fg'] = 'black'
 
