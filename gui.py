@@ -27,7 +27,7 @@ class Screen:
 
         self.use_weights = BooleanVar()
         self.use_weights.set(True)
-        self.weight_check = Checkbutton(self.generate_frame, text='Use Word Weights', command=self.generate, variable=self.use_weights)
+        self.weight_check = Checkbutton(self.generate_frame, text='Use Word Weights', variable=self.use_weights)
         self.weight_check.grid(row=0, column=0)
 
         self.titles_frame = Frame(self.root)
