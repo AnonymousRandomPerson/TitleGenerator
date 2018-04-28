@@ -30,7 +30,7 @@ Sci-Ti provides two interfaces, a graphical user interface (GUI) and a command l
 
     > python title_generator.py
 
-* Sci-Ti will prompt you to enter a file path (relative or absolute) of a plain text file to generate titles from. Type in a file path and press the Return/Enter key. For example, the relative path "sample_text.txt"
+* Sci-Ti will prompt you to enter a file path (relative or absolute) of a plain text file to generate titles from. Type in a file path and press the Return/Enter key. For example, the relative path "sample_text.txt" will load a sample science article about dark matter.
 * Sci-Ti will output 10 titles to the console for the contents of the file. A score will also be outputted for each title, displaying how good Sci-Ti thinks the title is relative to the other generated titles.
 * To generate 10 more titles, rerun the command above.
 * To run Sci-Ti on a specific file immediately, without having to enter the file path every time, the "--file-path" command line argument can be specified like so:
