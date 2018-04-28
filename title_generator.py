@@ -181,7 +181,7 @@ def main(file_name, random=False, use_rake=False, use_summa_text_rank=False, use
 
     file_name = args.file_name
     if not file_name:
-        print "Please enter file name of .txt file with extension (e.g., text.txt):"
+        print "Please enter file name of .txt file with extension (e.g., sample_text.txt):"
         file_name = raw_input()#"sample_text.txt"
     logger.info("\t %s" % file_name)
     logger.info("Got file name")
