@@ -35,6 +35,6 @@ Sci-Ti provides two interfaces, a graphical user interface (GUI) and a command l
 * To generate 10 more titles, rerun the command above.
 * To run Sci-Ti on a specific file immediately, without having to enter the file path every time, the "--file-path" command line argument can be specified like so:
 
-    > python title_generator.py --file-path sample_text.txt
+    > python title_generator.py --file-name sample_text.txt
 
 * By default, Sci-Ti uses a word weighting scheme to find appropriate words to use in the generated titles. To disable this weighting scheme and instead uniformly randomly select words for titles, add the "--no-weights" flag to the command when starting Sci-Ti.
